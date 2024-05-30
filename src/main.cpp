@@ -8,9 +8,9 @@
 #include "HX711.h"
 
 #include <Wire.h>
-#include "FS.h"
-#include "SD.h"
 #include "SPI.h"
+#include "SD.h"
+#include "FS.h"
 
 #include "webserver.h"
 #include <ESPAsyncWebServer.h>
@@ -27,18 +27,16 @@ Settings_t settings;
 // EEPROM
 #define EEPROM_SIZE sizeof(Settings_t)
 
-char s[300];
 File dataFile;
 
 unsigned long lastIsrTime = 0;
 long rpmPeriod = 0;
 
-long sweepMaxTm = 1000;
 long sweepCurrentTm = 0;
+long sweepMaxTm = 1000;
 
 void taskServoLoop(void *pvParameters)
 {
-
   while (true)
   {
     if (sweepCurrentTm == 0)
@@ -69,19 +67,15 @@ void setup(void)
   pinMode(PIN_RPM, INPUT_PULLDOWN);
   attachInterrupt(PIN_RPM, rpmInterruptHandler, FALLING);
 
-  setupStorage();
-
   setupLoadCell();
+
+  setupStorage();
 
   AsyncWebServer *server =
       setupWebserver();
 
-  server->on("/flist", HTTP_GET, [](AsyncWebServerRequest *request)
-             {
-    sweepCurrentTm = sweepMaxTm;
-    request->send(200); });
 
-  // upload a file to /upload
+  //curl -X POST zmotor_tester.local/sweep?t=5
   server->on("/sweep", HTTP_POST, [](AsyncWebServerRequest *request)
              {
     
@@ -293,7 +287,7 @@ void setupLoadCell(void)
 void ARDUINO_ISR_ATTR rpmInterruptHandler()
 {
   unsigned long currentIsrTime = micros();
-  // rpmPeriod = currentIsrTime - lastIsrTime;
+  
   rpmPeriod = currentIsrTime - lastIsrTime < 10 ? rpmPeriod : currentIsrTime - lastIsrTime;
   rpmPeriod = rpmPeriod == 0 ? -60000000 : rpmPeriod;
   lastIsrTime = currentIsrTime;

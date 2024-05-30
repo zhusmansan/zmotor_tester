@@ -1,24 +1,33 @@
+function updateLegendLabel(chrt) {
+  // var chrt = !this.chart ? this : this.chart;
+  chrt.update({});
+}
+
 const seriesConfigs = [
   {
     type: "line",
-    name: "Обороты (об/мин)",
+    name: "Обороты",
+    unit: "(об/мин)",
     value_name: "rpm",
-    floor: 0,
     min: 0,
+    max: 1000,
     lineWidth: 1,
     opposite: true,
   },
   {
     type: "line",
-    name: "Нагрузка (г)",
+    name: "Нагрузка",
+    unit: "(г)",
     value_name: "loadCell",
     lineWidth: 1,
     min: 0,
+    max: 300,
     opposite: true,
     // startOnTick: false,
   },
   {
-    name: "Заданное значение (%)",
+    name: "Заданное значение",
+    unit: "(%)",
     value_name: "setValue_percent",
     floor: 0,
     min: 0,
@@ -28,17 +37,19 @@ const seriesConfigs = [
     opposite: true,
   },
   {
-    name: "Мощность (Вт)",
+    name: "Мощность",
+    unit: "(Вт)",
     value_name: "power",
     floor: 0,
     min: 0,
-    // max: 30,
+    max: 5,
     // visible: false,
     lineWidth: 1,
     opposite: true,
   },
   {
-    name: "Напряжение (В)",
+    name: "Напряжение",
+    unit: "(В)",
     value_name: "batVoltage_v",
     floor: 0,
     min: 0,
@@ -47,7 +58,6 @@ const seriesConfigs = [
     lineWidth: 1,
     opposite: false,
   },
-
 ].map((v, i) => {
   return { ...v, yAxis: i };
 });
@@ -62,6 +72,9 @@ const loadCellChart = Highcharts.stockChart("chartContainer", {
         marker: {
           enabled: false,
         },
+        dataLabels: {
+          enabled: true,
+        },
       },
     },
 
@@ -74,8 +87,8 @@ const loadCellChart = Highcharts.stockChart("chartContainer", {
     return {
       opposite: v.opposite,
       floor: v.floor,
-      min: v.min,
-      max: v.max,
+      softMin: v.min,
+      softMax: v.max,
       startOnTick: v.startOnTick,
       title: {
         text: v.name,
@@ -119,17 +132,18 @@ const loadCellChart = Highcharts.stockChart("chartContainer", {
   },
   // series: seriesConfigs.map((v) => v),
 
-  title: {
-    text: "Мотор-тестер",
-  },
   tooltip: {
     split: false,
     shared: true,
-    headerFormat: "<span>{point.x/1000}</span><br/>",
+    headerFormat: "<b>{point.x:%H:%M:%S.%L}</b><br/>",
     valueDecimals: 2,
     style: {
       fontSize: "20px",
     },
+  },
+
+  title: {
+    text: "Мотор-тестер",
   },
 
   exporting: {
@@ -142,6 +156,23 @@ const loadCellChart = Highcharts.stockChart("chartContainer", {
     },
     itemStyle: {
       fontSize: "20px",
+    },
+    useHTML: true,
+    labelFormatter: function () {
+      return `<table class="div-table">
+            <tr class="div-table-row">
+              <td class="div-table-col" align="center">${this.name}</td>
+              <td class="div-table-col" align="center"></td>
+            </tr>
+            <tr class="div-table-row">
+              <td class="div-table-col">Значение:</td>
+              <td class="legend-value">${Highcharts.numberFormat(
+                this.yData[this.yData.length - 1],
+                1,
+                "."
+              )} ${this.userOptions.unit}</td>
+            </tr>
+          </table>`;
     },
   },
 });
@@ -174,6 +205,7 @@ function onClose(event) {
   setTimeout(initWebSocket, 2000);
 }
 
+var j = 0;
 function onMessage(event) {
   let wsData = JSON.parse(event.data);
 
@@ -188,7 +220,11 @@ function onMessage(event) {
       );
     }
   }
-  loadCellChart.redraw(false);
+
+  if (j == 0)
+    loadCellChart.redraw(false);
+  j++;
+  j %= 2;
 }
 
 function onLoad(event) {

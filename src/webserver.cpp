@@ -67,10 +67,10 @@ AsyncWebServer* setupWebserver(void)
 
   server.serveStatic("/", SPIFFS, "/");
 
-  // server.on("/flist", HTTP_GET, [](AsyncWebServerRequest *request)
-  //           { 
-  //             Serial.println(request->url());
-  //             request->send(200, "text/json", "[\"raw_data_00067.jsonl\",\"raw_data_00071.jsonl\",\"raw_data_00072.jsonl\"]"); });
+  server.on("/flist", HTTP_GET, [](AsyncWebServerRequest *request)
+            { 
+              Serial.println(request->url());
+              request->send(200, "text/json", "[\"raw_data_00067.jsonl\",\"raw_data_00071.jsonl\",\"raw_data_00072.jsonl\"]"); });
 
 
   server.serveStatic("/sd", SD, "/");
