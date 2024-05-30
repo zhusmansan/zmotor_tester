@@ -57,22 +57,36 @@ typedef struct Measurement
 
     float loadCellZeroOffset = 0;
 
-    char jsonl[500];
+    char formattedMessage[500];
 
-    char *formatMeasurement(void)
+
+    const char *jsonlFormat = "{\"mtime\":%f,\"potentiometer_percent\":%f, \"setValue_percent\":%f, \"rpm\":%f, \"loadCell_raw\":%ld, \"batCurrent_ma\":%f, \"batVoltage_v\":%f, \"power\":%f, \"loadCell\":%f}\n";
+    const char *csvFormat = "%f,%f,%f,%f,%ld,%f,%f,%f,%f\n";
+    const char *csvHeader = "mtime, potentiometer_percent, setValue_percent, rpm, loadCell_raw, batCurrent_ma, batVoltage_v, power, loadCell\n";
+
+    const char *arduinoFormat = "mtime:%f,potentiometer_percent:%f, setValue_percent:%f, rpm:%f, loadCell_raw:%ld, batCurrent_ma:%f, batVoltage_v:%f, power:%f, loadCell:%f\n";
+
+    char *formatMeasurement(const char *formatString)
     {
-        sprintf(jsonl, jsonlFormat, mtime,potentiometer_percent, setValue_percent, rpm, loadCell_raw, batCurrent_ma, batVoltage_v, power, loadCell);
-        return jsonl;
+        sprintf(formattedMessage, formatString, mtime,potentiometer_percent, setValue_percent, rpm, loadCell_raw, batCurrent_ma, batVoltage_v, power, loadCell);
+        return formattedMessage;
+    }
+    char *formatMeasurementJSONL(){
+        return formatMeasurement(jsonlFormat);
+    }
+    char *formatMeasurementCSV(){
+        return formatMeasurement(csvFormat);
+    }
+    char *formatMeasurementArduinoPlot(){
+        return formatMeasurement(arduinoFormat);
     }
 
-private:
-    const char *jsonlFormat = "{\"mtime\":%f,\"potentiometer_percent\":%f, \"setValue_percent\":%f, \"rpm\":%f, \"loadCell_raw\":%ld, \"batCurrent_ma\":%f, \"batVoltage_v\":%f, \"power\":%f, \"loadCell\":%f}\n";
 
 } Measurement_t;
 
 typedef struct Settings
 {
-    unsigned int magicNumber = 45;
+    unsigned int magicNumber = 1;
     bool sdLoggingEnabled = true;
     unsigned int lastFilenumber;
 

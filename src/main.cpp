@@ -23,6 +23,7 @@ Servo myservo; // create servo object to control a servo
 Measurement_t m;
 
 Settings_t settings;
+char fName[30];
 
 // EEPROM
 #define EEPROM_SIZE sizeof(Settings_t)
@@ -74,8 +75,7 @@ void setup(void)
   AsyncWebServer *server =
       setupWebserver();
 
-
-  //curl -X POST zmotor_tester.local/sweep?t=5
+  // curl -X POST zmotor_tester.local/sweep?t=5
   server->on("/sweep", HTTP_POST, [](AsyncWebServerRequest *request)
              {
     
@@ -94,6 +94,8 @@ void setup(void)
     
     
     request->send(200); });
+
+  server->serveStatic("/sd", SD, "/").setDefaultFile(fName);
 
   xTaskCreate(
       taskServoLoop, "taskServoLoop" // A name just for humans
@@ -136,9 +138,9 @@ void loop()
   i %= 2;
   if (i == 0)
   {
-    sendWsMessage(m.formatMeasurement());
-    Serial.print(m.formatMeasurement());
-    saveToFile(m.formatMeasurement());
+    sendWsMessage(m.formatMeasurementJSONL());
+    Serial.print(m.formatMeasurementArduinoPlot());
+    saveToFile(m.formatMeasurementCSV());
   }
   delay(100);
 }
@@ -248,11 +250,13 @@ void setupStorage(void)
   EEPROM.writeBytes(0, &settings, EEPROM_SIZE);
   EEPROM.commit();
 
-  char fName[30];
-  sprintf(fName, "/raw_data_%05u.jsonl", settings.lastFilenumber);
+  sprintf(fName, "/raw_data_%05u.csv", settings.lastFilenumber);
   Serial.print("fName:");
   Serial.println(fName);
   dataFile = SD.open(fName, FILE_WRITE);
+
+  dataFile.print(m.csvHeader);
+  dataFile.flush();
 }
 
 void taskReadScale(void *pvParameters)
@@ -287,7 +291,7 @@ void setupLoadCell(void)
 void ARDUINO_ISR_ATTR rpmInterruptHandler()
 {
   unsigned long currentIsrTime = micros();
-  
+
   rpmPeriod = currentIsrTime - lastIsrTime < 10 ? rpmPeriod : currentIsrTime - lastIsrTime;
   rpmPeriod = rpmPeriod == 0 ? -60000000 : rpmPeriod;
   lastIsrTime = currentIsrTime;
