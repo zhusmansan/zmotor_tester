@@ -15,7 +15,7 @@ body {
 }
 
 .test-btn{
-  width:10em;
+  width:11em;
   height:2em;
   margin:0.3em;
   display: inline-block;
@@ -30,8 +30,7 @@ body {
   padding: 1.5rem;
   border: 1px solid #dee2e6;
   border-radius: 0.375rem;
-  height: 800px;
-
+  height: 1080px;
 }
 
 .tab {
@@ -45,12 +44,17 @@ body {
 }
 
 .tab-content {
-  display: none;
+  /* display: none; */
   height:100%;
 }
 
 #chartContainer{
-  height: 80%;
+  height: 45%;
+}
+
+.rpmChart{
+  display: inline-block;
+  width: 48%;
 }
 
 #content-1:has(~ .tab-nav > #tab-btn-1:checked),

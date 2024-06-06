@@ -10,8 +10,7 @@ const seriesConfigs = [
     unit: "(об/мин)",
     value_name: "rpm",
     min: 0,
-    max: 1000,
-    lineWidth: 1,
+    softMax: 1000,
     opposite: true,
   },
   {
@@ -19,10 +18,11 @@ const seriesConfigs = [
     name: "Нагрузка",
     unit: "(г)",
     value_name: "loadCell",
-    lineWidth: 1,
-    min: 0,
-    max: 300,
+    // lineWidth: 1,
+    softMin: 0,
+    softMax: 300,
     opposite: true,
+    endOnTick: false,
     // startOnTick: false,
   },
   {
@@ -33,7 +33,7 @@ const seriesConfigs = [
     min: 0,
     max: 100,
     // visible: false,
-    lineWidth: 1,
+    // lineWidth: 1,
     opposite: true,
   },
   {
@@ -42,9 +42,9 @@ const seriesConfigs = [
     value_name: "power",
     floor: 0,
     min: 0,
-    max: 5,
+    softMax: 5,
     // visible: false,
-    lineWidth: 1,
+    // lineWidth: 1,
     opposite: true,
   },
   {
@@ -55,7 +55,18 @@ const seriesConfigs = [
     min: 0,
     // max: 30,
     visible: false,
-    lineWidth: 1,
+    // lineWidth: 1,
+    opposite: false,
+  },
+  {
+    name: "Ток",
+    unit: "(мА)",
+    value_name: "batCurrent_ma",
+    floor: 0,
+    min: 0,
+    // max: 30,
+    visible: false,
+    // lineWidth: 1,
     opposite: false,
   },
 ].map((v, i) => {
@@ -85,10 +96,8 @@ const loadCellChart = Highcharts.stockChart("chartContainer", {
 
   yAxis: seriesConfigs.map((v) => {
     return {
-      opposite: v.opposite,
-      floor: v.floor,
-      softMin: v.min,
-      softMax: v.max,
+      ...v,
+      visible: true,
       startOnTick: v.startOnTick,
       title: {
         text: v.name,
@@ -97,29 +106,23 @@ const loadCellChart = Highcharts.stockChart("chartContainer", {
   }),
   rangeSelector: {
     buttons: [
-      // {
-      //   type: "millisecond",
-      //   count: 60 * 1 * 1000,
-      //   text: "60",
-      //   title: "Посмотреть 1 минуту",
-      // },
       {
-        type: "millisecond",
-        count: 120 * 1 * 1000,
-        text: "120",
-        title: "Посмотреть 2 минуты",
+        type: "second",
+        count: 30,
+        text: "30",
+        title: "Посмотреть 30 секунд",
       },
       {
-        type: "millisecond",
-        count: 300 * 1 * 1000,
-        text: "300",
-        title: "Посмотреть 5 минут",
+        type: "second",
+        count: 60,
+        text: "60",
+        title: "Посмотреть 60 секунд",
       },
       {
-        type: "millisecond",
-        count: 600 * 1 * 1000,
-        text: "600",
-        title: "Посмотреть 10 минут",
+        type: "second",
+        count: 90,
+        text: "90",
+        title: "Посмотреть 90 секунд",
       },
       {
         type: "all",
@@ -144,6 +147,7 @@ const loadCellChart = Highcharts.stockChart("chartContainer", {
 
   title: {
     text: "Мотор-тестер",
+    floating: true,
   },
 
   exporting: {
@@ -183,6 +187,91 @@ const loadCellChart = Highcharts.stockChart("chartContainer", {
     // loadCellChart.addSeries({ ...seriesConfigs[1], data: [1, 2] });
   }
 }
+
+const seriesPairs = [
+  { sx: "rpm", sy: "power" },
+  { sx: "rpm", sy: "loadCell" },
+];
+
+function drawGraphs() {
+  for (let sp of seriesPairs) {
+    
+
+    let ng_xSeries = loadCellChart.series.find(
+      (v) => v.userOptions.value_name == sp.sx
+    );
+    let ng_ySeries = loadCellChart.series.find(
+      (v) => v.userOptions.value_name == sp.sy
+    );
+
+    let sname = `${sp.sx}_${sp.sy}`;
+    let title = `${ng_xSeries.name}-${ng_ySeries.name}`;
+
+    let ng_data = ng_xSeries.processedYData
+      .map((v, i) => [v, ng_ySeries.processedYData[i]])
+      .filter((v) => v[0] != -1);
+
+    let newChart = Highcharts.chart(sname, {
+      chart: {
+        type: "scatter",
+      },
+      yAxis: { softMin: 0 },
+
+      title: {
+        text: title,
+      },
+
+      series: [
+        { type: "scatter", name: title, data: ng_data },
+        {
+          type: "line",
+          name: `${title}-тренд`,
+          data: getTrendLine(ng_data),
+        },
+      ],
+    });
+
+    // newChart.addSeries({ name: newChart.title.textStr, data: ng_data });
+  }
+}
+
+function getTrendLine(data) {
+  const n = data.length;
+
+  let sumX = 0,
+    sumY = 0,
+    sumXY = 0,
+    sumX2 = 0;
+
+  // Calculate the sums needed for linear regression
+  for (let i = 0; i < n; i++) {
+    const [x, y] = data[i];
+    sumX += x;
+    sumY += y;
+    sumXY += x * y;
+    sumX2 += x ** 2;
+  }
+
+  // Calculate the slope of the trend line
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX ** 2);
+
+  // Calculate the intercept of the trend line
+  const intercept = (sumY - slope * sumX) / n;
+
+  const trendline = []; // Array to store the trend line data points
+
+  // Find the minimum and maximum x-values from the scatter plot data
+  const minX = Math.min(...data.map(([x]) => x));
+  const maxX = Math.max(...data.map(([x]) => x));
+
+  // Calculate the corresponding y-values for the trend line using the slope
+  // and intercept
+  trendline.push([minX, minX * slope + intercept]);
+  trendline.push([maxX, maxX * slope + intercept]);
+
+  return trendline;
+}
+
 var gateway = `ws://${
   window.location.protocol == "http"
     ? window.location.hostname
@@ -221,8 +310,7 @@ function onMessage(event) {
     }
   }
 
-  if (j == 0)
-    loadCellChart.redraw(false);
+  if (j == 0) loadCellChart.redraw(false);
   j++;
   j %= 2;
 }

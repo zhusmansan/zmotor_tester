@@ -12,38 +12,29 @@
 
   <body>
     <div class="container">
-      <div class="tab">
+      <!-- <div class="tab"> -->
         <div class="tab-content" id="content-1">
           <form action="./sweep" method="post" target="frame">
             <div>
               <button class="test-btn">Запустить тест</button>
               Время нарастания 0 - 100% (сек.) =
-              <input class="tm-input" name="sweepTime" value="30" />
+              <input class="tm-input" name="sweepTime" value="25" />
             </div>
           </form>
           <form action="./sweep" method="post" target="frame">
-            <button class="test-btn">Сбросить</button>
+            <button class="test-btn">Остановить тест</button>
+            <button class="test-btn" onclick="drawGraphs()">Построить графики</button>
             <input style="display: none" name="sweepTime" value="0" />
           </form>
           <a class="test-btn"  href="sd" target="_blank" download>Скачать файл</a>
           <div id="chartContainer"></div>
           <br />
+          <div class="rpmChart" id="rpm_power"></div>
+          
+          <div class="rpmChart" id="rpm_loadCell"></div>
           <script src="chart.js"></script>
         </div>
-        <div class="tab-content" id="content-2">
-          <list>
-            <li>qwe</li>
-            </list>
-        </div>
-        <div class="tab-content" id="content-3"></div>
-        <div class="tab-nav">
-          <input checked id="tab-btn-1" name="tab-btn" type="radio" value="" />
-          <label for="tab-btn-1">График</label>
-
-          <!-- <input id="tab-btn-2" name="tab-btn" type="radio" value="" />
-          <label for="tab-btn-2">История</label> -->
-        </div>
-      </div>
+       <!-- </div> -->
     </div>
     <iframe name="frame" style="display: none"></iframe>
   </body>

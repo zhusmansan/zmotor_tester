@@ -61,7 +61,7 @@ void setup(void)
   Serial.begin(115200);
 
   myservo.setPeriodHertz(50); // Standard 50hz servo
-  myservo.attach(PIN_SERVO, 990, 2020);
+  myservo.attach(PIN_SERVO, 995, 2020);
   myservo.write(0);
 
   // configure rpm meter pin and interrupt handling
@@ -261,11 +261,11 @@ void setupStorage(void)
 
 void taskReadScale(void *pvParameters)
 {
-
+  scale.tare(30);
   while (true)
   {
-    m.loadCell_raw = scale.read();
-    m.loadCell = (m.loadCell_raw - settings.loadCellRawOfset) / (settings.loadCellScaleFactor == 0 ? 1 : settings.loadCellScaleFactor);
+    m.loadCell_raw = scale.get_value(1);
+    m.loadCell = (m.loadCell_raw ) / (settings.loadCellScaleFactor == 0 ? 1 : settings.loadCellScaleFactor);
     delay(50);
   }
 }
@@ -273,7 +273,7 @@ void taskReadScale(void *pvParameters)
 void setupLoadCell(void)
 {
   scale.begin(PIN_LC_DOUT, PIN_LC_SCK);
-
+  
   // Read scale periodically
   xTaskCreate(
       taskReadScale, "TaskReadScale" // A name just for humans
