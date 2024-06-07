@@ -219,6 +219,7 @@ function drawGraphs() {
 
       title: {
         text: title,
+        floating:true,
       },
 
       series: [
